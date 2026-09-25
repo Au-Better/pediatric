@@ -2,7 +2,8 @@
   "name": "sanity-template-astro-clean",
   "description": "Minimal Astro site with Sanity Studio",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=studio\""
+    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=studio\"",
+    "generate-types": "wrangler types"
   },
   "keywords": [
     "Sanity",
@@ -26,5 +27,11 @@
   "devDependencies": {
     "concurrently": "^9.2.1"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "wrangler": "^4.140.0"
+  },
+  "overrides": {
+    "vite": "^7"
+  }
 }

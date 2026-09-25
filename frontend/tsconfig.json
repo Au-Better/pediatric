@@ -2,7 +2,11 @@
   "extends": "astro/tsconfigs/base",
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,6 +17,14 @@
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["node_modules", "dist", ".vercel"]
+  "include": [
+    ".astro/types.d.ts",
+    "**/*",
+    "./worker-configuration.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".vercel"
+  ]
 }

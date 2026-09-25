@@ -14,19 +14,16 @@ const studioUrl = PUBLIC_SANITY_STUDIO_URL || "http://localhost:3333";
 
 import sanity from "@sanity/astro";
 import react from "@astrojs/react";
-
-// Change this depending on your hosting provider (Vercel, Netlify etc)
-// https://docs.astro.build/en/guides/server-side-rendering/#adding-an-adapter
-import vercel from "@astrojs/vercel";
-
 import tailwindcss from "@tailwindcss/vite";
+
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
   // Set to 'server' for Visual Editing and on-demand rendering
   // Requires an adapter for deployment (Vercel, Netlify, Cloudflare, Node, etc.)
   output: "server",
-  adapter: vercel(),
+
   integrations: [
     sanity({
       projectId,
@@ -41,6 +38,7 @@ export default defineConfig({
     }),
     react(), // Required for Sanity Studio
   ],
+
   vite: {
     optimizeDeps: {
       include: [
@@ -55,4 +53,6 @@ export default defineConfig({
 
     plugins: [tailwindcss()],
   },
+
+  adapter: cloudflare(),
 });
