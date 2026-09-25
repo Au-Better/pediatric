@@ -8,8 +8,8 @@ const {
 } = loadEnv(import.meta.env.MODE, process.cwd(), "");
 import { defineConfig } from "astro/config";
 
-const projectId = PUBLIC_SANITY_STUDIO_PROJECT_ID;
-const dataset = PUBLIC_SANITY_STUDIO_DATASET;
+const projectId = "w0vz3r6z";
+const dataset = "production";
 const studioUrl = PUBLIC_SANITY_STUDIO_URL || "http://localhost:3333";
 
 import sanity from "@sanity/astro";
