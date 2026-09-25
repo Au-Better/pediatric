@@ -1,5 +1,8 @@
 {
   "name": "pediatric",
   "compatibility_date": "2026-09-25",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  }
 }
