@@ -21,7 +21,7 @@ const visualEditingEnabled =
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
 
@@ -45,24 +45,26 @@ const visualEditingEnabled =
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@500;700;800&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
     <title>{title}</title>
-
   </head>
   <body>
     <VisualEditing enabled={visualEditingEnabled} />
-    <div class="mx-auto sm:max-w-3xl sm:px-5">
-      <header class="fixed left-0 right-0 top-0 z-10 flex border-b border-gray-200 bg-white px-1 sm:static sm:border-b-0 sm:bg-transparent sm:my-3 sm:py-2">
-        <a class="font-extrabold text-lg leading-5 pl-2 my-3 no-underline text-black sm:my-3 sm:mb-2 sm:text-2xl" href="/">Astro + Sanity</a>
+    <div class="flex min-h-dvh flex-col">
+      <header class="px-5 py-4">
+        <a href="/" class="inline-flex items-center gap-3 text-ink no-underline">
+          <img src="/logo.png" alt="Au Better logo" class="h-16 w-auto" />
+          <span class="font-display text-2xl font-bold">Au Better</span>
+        </a>
       </header>
-      <main class="mt-[45px] sm:mt-0">
+      <main class="flex-1">
         <slot />
       </main>
-      <footer class="flex justify-end px-3 sm:my-3">
-        <p class="text-sm leading-5 flex items-center gap-0.5">
+      <footer class="flex justify-end px-5 py-6">
+        <p class="flex items-center gap-1 text-sm text-ink/70">
           Made with <svg
             data-sanity-icon="heart-filled"
             width="1em"

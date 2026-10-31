@@ -1,17 +1,56 @@
 ---
-import Card from "../components/Card.astro";
-import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
-import { getPosts } from "../utils/sanity";
+import { getSiteSettings } from "../utils/sanity";
 
-const posts = await getPosts();
+const settings = await getSiteSettings();
+
+const headline = settings?.splashHeadline || "Hey there!";
+const intro =
+  settings?.splashIntro ||
+  "Au Better is an organization serving our most vulnerable yet important generation—children. To better help us help you, are you a";
+const medicalLabel = settings?.medicalButtonLabel || "Medical professional";
+const familyLabel = settings?.familyButtonLabel || "Parent, family member, or patient";
+
+// Split out the lowercase word "better" so it can be set in the playful display face.
+const introParts = intro.split(/(better)/);
 ---
 
 <Layout
-  title="Astro + Sanity"
-  description="A blog built with Astro and Sanity."
+  title="Au Better"
+  description="Au Better is an organization serving our most vulnerable yet important generation—children."
 >
-  <section>
-    {posts.length ? posts.map((post) => <Card post={post} />) : <Welcome />}
+  <section
+    class="mx-auto flex min-h-[70dvh] max-w-3xl flex-col items-center justify-center px-5 py-12 text-center"
+  >
+    <h1 class="font-display text-7xl font-bold leading-none text-brand-red md:text-9xl">
+      {headline}
+    </h1>
+    <p class="mt-8 max-w-2xl text-xl leading-relaxed md:text-2xl">
+      {
+        introParts.map((part) =>
+          part === "better" ? (
+            <span class="inline-block -rotate-3 font-display text-[1.3em] font-bold text-brand-red">
+              {part}
+            </span>
+          ) : (
+            part
+          ),
+        )
+      }
+    </p>
+    <div class="mt-10 flex w-full max-w-xl flex-col gap-4 sm:flex-row">
+      <a
+        href="/medical-professionals"
+        class="flex-1 rounded-full bg-brand-red px-8 py-5 font-display text-2xl font-semibold text-cream no-underline transition-colors hover:bg-brand-red-dark"
+      >
+        {medicalLabel}
+      </a>
+      <a
+        href="/families"
+        class="flex-1 rounded-full bg-brand-yellow px-8 py-5 font-display text-2xl font-semibold text-ink no-underline transition-colors hover:bg-brand-red hover:text-cream"
+      >
+        {familyLabel}
+      </a>
+    </div>
   </section>
 </Layout>

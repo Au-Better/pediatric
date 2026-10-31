@@ -2,20 +2,21 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Inter", sans-serif;
-  --font-serif: "PT Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: "Fredoka", sans-serif;
+  --font-sans: "Nunito", sans-serif;
 
+  /* Palette taken from the reference site: red, yellow and cream, with near-black ink */
+  --color-cream: #f5eee1;
+  --color-ink: #1f1f1f;
+  --color-brand-red: #ed1d27;
+  --color-brand-red-dark: #ba121b;
+  --color-brand-yellow: #fddd5d;
   --color-white: #fff;
-  --color-black: #101112;
-  --color-gray-200: #ced2d9;
-  --color-gray-600: #6e7683;
-  --color-blue-600: #1e61cd;
-  --color-magenta-100: #f9d7eb;
 }
 
 html {
-  background-color: var(--color-white);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   text-size-adjust: 100%;
 }

@@ -1,6 +1,5 @@
 import { sanityClient } from "sanity:client";
 import type { PortableTextBlock } from "@portabletext/types";
-import type { Slug } from "@sanity/types";
 import groq from "groq";
 
 const visualEditingEnabled = import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
@@ -28,29 +27,6 @@ const imageProjection = `{
   "lqip": asset->metadata.lqip,
 }`;
 
-export async function getPosts(): Promise<Post[]> {
-  return loadQuery<Post[]>(
-    groq`*[_type == "post" && defined(slug.current)] | order(_createdAt desc) {
-      ...,
-      mainImage ${imageProjection}
-    }`,
-  );
-}
-
-export async function getPost(slug: string): Promise<Post> {
-  return loadQuery<Post>(
-    groq`*[_type == "post" && slug.current == $slug][0] {
-      ...,
-      mainImage ${imageProjection},
-      seo {
-        ...,
-        ogImage ${imageProjection}
-      }
-    }`,
-    { slug },
-  );
-}
-
 export interface SanityImage {
   _type: "image";
   asset?: { _ref: string; _type: "reference" };
@@ -71,14 +47,70 @@ export interface Seo {
   ogImage?: SanityImage;
 }
 
-export interface Post {
+/** Text shared by the whole site, from the single siteSettings document. */
+export interface SiteSettings {
+  siteName?: string;
+  splashHeadline?: string;
+  splashIntro?: string;
+  medicalButtonLabel?: string;
+  familyButtonLabel?: string;
+}
+
+/** A page as the site needs it. parentId links it to the page above it in the tree. */
+export interface PageSummary {
   _id: string;
-  _type: "post";
-  _createdAt: string;
   title?: string;
-  slug: Slug;
-  excerpt?: string;
+  slug: string;
+  parentId?: string | null;
+  intro?: string;
+  body?: PortableTextBlock[];
   mainImage?: SanityImage;
-  body: PortableTextBlock[];
   seo?: Seo;
+}
+
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  return loadQuery<SiteSettings | null>(
+    groq`*[_id == "siteSettings"][0]{
+      siteName,
+      splashHeadline,
+      splashIntro,
+      medicalButtonLabel,
+      familyButtonLabel
+    }`,
+  );
+}
+
+export async function getPages(): Promise<PageSummary[]> {
+  return loadQuery<PageSummary[]>(
+    groq`*[_type == "page" && defined(slug.current)]{
+      _id,
+      title,
+      "slug": slug.current,
+      "parentId": parent._ref,
+      intro,
+      body,
+      mainImage ${imageProjection},
+      seo {
+        ...,
+        ogImage ${imageProjection}
+      }
+    }`,
+  );
+}
+
+/**
+ * Builds a page's web address by walking up its parents, such as "/families/learn/vaccines".
+ * The seen-set stops a page list that loops back on itself from running forever.
+ */
+export function pagePath(page: PageSummary, pages: PageSummary[]): string {
+  const byId = new Map(pages.map((p) => [p._id, p]));
+  const segments: string[] = [];
+  const seen = new Set<string>();
+  let current: PageSummary | undefined = page;
+  while (current && !seen.has(current._id)) {
+    seen.add(current._id);
+    segments.unshift(current.slug);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return `/${segments.join("/")}`;
 }
