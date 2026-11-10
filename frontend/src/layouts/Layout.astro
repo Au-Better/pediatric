@@ -1,6 +1,7 @@
 ---
 import { VisualEditing } from "@sanity/astro/visual-editing";
 import "../styles/global.css";
+import { getSiteSettings } from "../utils/sanity";
 
 interface Props {
   title: string;
@@ -9,7 +10,24 @@ interface Props {
 }
 
 const { title, description, image } = Astro.props;
-const canonicalURL = Astro.url;
+
+// Every page names https://aubetter.org as its one true address, whichever address served it.
+// Astro.site comes from `site` in astro.config.mjs.
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+
+// Search engines may list a page only when BOTH are true:
+// 1. "Show the site in search engines" is switched on in the Studio's Site settings, and
+// 2. the page was served from the main address (not workers.dev, a preview link, or a local copy).
+// If the setting can't be read, the page stays hidden rather than guessing.
+let showInSearchEngines = false;
+try {
+  const settings = await getSiteSettings();
+  showInSearchEngines = settings?.showInSearchEngines === true;
+} catch {
+  showInSearchEngines = false;
+}
+const servedFromMainAddress = Astro.url.hostname === "aubetter.org";
+const hideFromSearchEngines = !(showInSearchEngines && servedFromMainAddress);
 
 // Enable visual editing overlays when the env variable is set to "true"
 const visualEditingEnabled =
@@ -24,6 +42,7 @@ const visualEditingEnabled =
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
+    {hideFromSearchEngines && <meta name="robots" content="noindex" />}
 
     <!-- Primary meta -->
     {description && <meta name="description" content={description} />}

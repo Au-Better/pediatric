@@ -5,9 +5,9 @@ import {codeInput} from '@sanity/code-input'
 import {presentationTool} from 'sanity/presentation'
 import {schemaTypes} from './src/schemaTypes'
 
-// Environment variables for project configuration
-const projectId = process.env.SANITY_STUDIO_PROJECT_ID || 'your-projectID'
-const dataset = process.env.SANITY_STUDIO_DATASET || 'production'
+// Written in directly (not read from a .env file) so the deployed Studio always opens this project.
+const projectId = 'w0vz3r6z'
+const dataset = 'production'
 
 // Presentation Preview URL
 const previewUrl = process.env.SANITY_STUDIO_PREVIEW_URL || 'http://localhost:4321'

@@ -2,6 +2,10 @@
   "name": "pediatric",
   "compatibility_date": "2026-09-25",
   "compatibility_flags": ["nodejs_compat"],
+  // Turns off pediatric.jsoens27.workers.dev so the site has one public address.
+  // aubetter.org is connected in the Cloudflare dashboard (Workers & Pages → pediatric → Domains)
+  // and is not affected by this line.
+  "workers_dev": false,
   "observability": {
     "logs": {
       "enabled": true,

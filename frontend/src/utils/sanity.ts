@@ -54,6 +54,8 @@ export interface SiteSettings {
   splashIntro?: string;
   medicalButtonLabel?: string;
   familyButtonLabel?: string;
+  /** Only an explicit true lets search engines list the site; missing or false keeps it hidden. */
+  showInSearchEngines?: boolean;
 }
 
 /** A page as the site needs it. parentId links it to the page above it in the tree. */
@@ -75,7 +77,8 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
       splashHeadline,
       splashIntro,
       medicalButtonLabel,
-      familyButtonLabel
+      familyButtonLabel,
+      showInSearchEngines
     }`,
   );
 }

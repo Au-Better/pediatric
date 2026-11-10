@@ -41,5 +41,13 @@ export default defineType({
       type: 'string',
       initialValue: 'Parent, family member, or patient',
     }),
+    defineField({
+      name: 'showInSearchEngines',
+      title: 'Show the site in search engines',
+      description:
+        'Off: Google and other search engines are asked not to list any page. Turn this on and publish when the site is ready to launch. Changes reach the live site within a few minutes.',
+      type: 'boolean',
+      initialValue: false,
+    }),
   ],
 })

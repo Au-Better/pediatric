@@ -20,6 +20,9 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
+  // The site's main address. Pages use it to tell search engines their one true address.
+  site: "https://aubetter.org",
+
   // Set to 'server' for Visual Editing and on-demand rendering
   // Requires an adapter for deployment (Vercel, Netlify, Cloudflare, Node, etc.)
   output: "server",
