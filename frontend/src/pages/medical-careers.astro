@@ -1,0 +1,39 @@
+---
+// The road to medical careers: an interactive page for high school and college students.
+// The careers and their sources live in src/data/careers; the interactive part is
+// src/components/careers/CareerRoadmap.tsx.
+import CareerRoadmap from "../components/careers/CareerRoadmap";
+import Layout from "../layouts/Layout.astro";
+
+// A shared link can open on a chosen career, for example /medical-careers?career=nurse-practitioner
+const initialCareer = Astro.url.searchParams.get("career") ?? undefined;
+const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
+---
+
+<Layout
+  title="The road to a medical career — Au Better"
+  description="See the steps, schooling, exams and years it takes to become a doctor, nurse, nurse practitioner, physician associate, therapist or EMT, from high school onward."
+>
+  <section class="mx-auto max-w-6xl px-5 pt-10 pb-8">
+    <h1 class="font-display text-5xl leading-tight font-bold text-brand-red md:text-6xl">
+      The road to a medical career
+    </h1>
+    <p class="mt-4 max-w-3xl text-xl leading-relaxed text-ink/80 md:text-2xl">
+      There are many ways to care for patients. Pick a career to see each step from high school onward:
+      the degrees, the exams, the training and how long it all usually takes.
+    </p>
+  </section>
+
+  <CareerRoadmap client:load initialCareer={initialCareer} initialCompare={initialCompare} />
+</Layout>
+
+<style is:global>
+  /* Diagonal stripes on the part of a bar that shows extra time some people take. */
+  .bar-stripes {
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.55) 0 3px,
+      transparent 3px 7px
+    );
+  }
+</style>
