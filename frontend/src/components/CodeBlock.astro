@@ -1,40 +1,26 @@
 ---
-import { createHighlighter, type BundledLanguage, bundledLanguages } from "shiki";
-
+// Shows a code block from the Studio as plain text in a dark box.
+//
+// This used to color the code with the "shiki" highlighting library, which packed
+// data for 300+ programming languages and color themes into the website (about 85%
+// of its size). Au Better is a health site that doesn't use code blocks, so plain
+// text is enough. If one is ever added in the Studio, it still displays.
 const { node } = Astro.props;
-const { code, language, filename } = node;
-
-// Map language aliases and fall back to "text" for unsupported languages
-const langAliases: Record<string, string> = {
-  groq: "javascript",
-  astro: "tsx",
-};
-
-const resolvedLang = langAliases[language] ?? language ?? "text";
-const lang = resolvedLang in bundledLanguages ? resolvedLang : "text";
-
-const highlighter = await createHighlighter({
-  themes: ["github-dark-dimmed"],
-  langs: [lang as BundledLanguage],
-});
-
-const html = highlighter.codeToHtml(code, {
-  lang,
-  theme: "github-dark-dimmed",
-});
+const code: string = node?.code ?? "";
+const filename: string | undefined = node?.filename;
 ---
 
 <div class="code-block">
   {filename && <div class="code-block__filename">{filename}</div>}
-  <Fragment set:html={html} />
+  <pre><code>{code}</code></pre>
 </div>
 
 <style is:global>
   .code-block {
-    margin: var(--space-4) 0;
+    margin: 1rem 0;
     border-radius: 6px;
     overflow: hidden;
-    font-size: var(--font-size-1);
+    font-size: 0.9rem;
     line-height: 1.7;
   }
 
@@ -42,20 +28,24 @@ const html = highlighter.codeToHtml(code, {
     padding: 8px 16px;
     background: #1c2028;
     color: #768390;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-0);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
     border-bottom: 1px solid #373e47;
   }
 
-  .code-block pre.shiki {
+  .code-block pre {
     margin: 0;
     padding: 16px;
     overflow-x: auto;
-    font-family: var(--font-mono);
+    background: #22272e;
+    color: #adbac7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     tab-size: 2;
   }
 
-  .code-block pre.shiki code {
+  .code-block pre code {
     font-family: inherit;
+    background: none;
+    color: inherit;
   }
 </style>
