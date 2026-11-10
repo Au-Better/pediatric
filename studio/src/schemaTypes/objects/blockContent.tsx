@@ -1,9 +1,7 @@
 import {defineType, defineArrayMember} from 'sanity'
 
 /**
- * This is the schema definition for the rich text fields used for
- * for this blog studio. When you import it in schemas.js it can be
- * reused in other parts of the studio with:
+ * Rich text for page bodies. Reuse it in other schema types with:
  *  {
  *    name: 'someName',
  *    title: 'Some title',
