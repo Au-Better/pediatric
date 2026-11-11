@@ -65,6 +65,8 @@ export interface PageSummary {
   slug: string;
   parentId?: string | null;
   intro?: string;
+  /** An interactive tool shown under the intro, picked in the Studio's "Interactive tool" field. */
+  tool?: "careersRoadmap";
   body?: PortableTextBlock[];
   mainImage?: SanityImage;
   seo?: Seo;
@@ -91,6 +93,7 @@ export async function getPages(): Promise<PageSummary[]> {
       "slug": slug.current,
       "parentId": parent._ref,
       intro,
+      tool,
       body,
       mainImage ${imageProjection},
       seo {
