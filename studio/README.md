@@ -1,9 +1,12 @@
-# Sanity Clean Content Studio
+# Au Better Studio
 
-Congratulations, you have now installed the Sanity Content Studio, an open-source real-time content editing environment connected to the Sanity backend.
+The content editor for aubetter.org, hosted at https://aubetter.sanity.studio.
 
-Now you can do the following things:
+- Content types are in `src/schemaTypes/`.
+- After changing anything in this folder, update the hosted Studio:
 
-- [Read “getting started” in the docs](https://www.sanity.io/docs/introduction/getting-started?utm_source=readme)
-- [Join the community Slack](https://slack.sanity.io/?utm_source=readme)
-- [Extend and build plugins](https://www.sanity.io/docs/content-studio/extending?utm_source=readme)
+  ```sh
+  cd ~/Documents/pediatric && git pull && cd studio && npx sanity deploy
+  ```
+
+See the main `README.md` one folder up for how the whole site fits together.

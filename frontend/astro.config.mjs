@@ -1,13 +1,11 @@
 // Loading environment variables from .env files
 // https://docs.astro.build/en/guides/configuring-astro/#environment-variables
 import { loadEnv } from "vite";
-const {
-  PUBLIC_SANITY_STUDIO_PROJECT_ID,
-  PUBLIC_SANITY_STUDIO_DATASET,
-  PUBLIC_SANITY_STUDIO_URL,
-} = loadEnv(import.meta.env.MODE, process.cwd(), "");
+const { PUBLIC_SANITY_STUDIO_URL } = loadEnv(import.meta.env.MODE, process.cwd(), "");
 import { defineConfig } from "astro/config";
 
+// Written in directly (not read from .env or Cloudflare settings) so every build uses
+// the same Sanity project. These values are public.
 const projectId = "w0vz3r6z";
 const dataset = "production";
 const studioUrl = PUBLIC_SANITY_STUDIO_URL || "http://localhost:3333";
@@ -23,8 +21,8 @@ export default defineConfig({
   // The site's main address. Pages use it to tell search engines their one true address.
   site: "https://aubetter.org",
 
-  // Set to 'server' for Visual Editing and on-demand rendering
-  // Requires an adapter for deployment (Vercel, Netlify, Cloudflare, Node, etc.)
+  // Pages are built on Cloudflare at each visit, so published Sanity changes show up without a rebuild.
+  // The Cloudflare adapter at the bottom of this file makes that work.
   output: "server",
 
   integrations: [

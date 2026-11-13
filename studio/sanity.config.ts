@@ -13,7 +13,7 @@ const dataset = 'production'
 const previewUrl = process.env.SANITY_STUDIO_PREVIEW_URL || 'http://localhost:4321'
 
 export default defineConfig({
-  name: 'sanity-template-astro-clean',
+  name: 'au-better',
   title: 'Au Better',
   projectId,
   dataset,
