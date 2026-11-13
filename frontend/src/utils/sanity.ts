@@ -68,6 +68,8 @@ export interface PageSummary {
   body?: PortableTextBlock[];
   mainImage?: SanityImage;
   seo?: Seo;
+  /** How the buttons to this page's sub-pages look, picked in the Studio's "Menu button style" field. */
+  menuStyle?: "list" | "grid";
 }
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
@@ -88,6 +90,7 @@ export async function getPages(): Promise<PageSummary[]> {
     groq`*[_type == "page" && defined(slug.current)]{
       _id,
       title,
+      menuStyle,
       "slug": slug.current,
       "parentId": parent._ref,
       intro,

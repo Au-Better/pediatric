@@ -15,6 +15,9 @@ if (!page) {
 
 // A page with children works as a menu: each child is linked as a large button.
 const children = pages.filter((p) => p.parentId === page._id);
+// The Studio's "Menu button style" picks solid red buttons in one column (the default) or
+// red-outlined cream buttons in a two-column grid.
+const menuIsGrid = page.menuStyle === "grid";
 
 const seoTitle = page.seo?.metaTitle || page.title || "Au Better";
 const seoDescription = page.seo?.metaDescription || page.intro;
@@ -45,11 +48,19 @@ const ogImage = ogImageSource
 
     {
       children.length > 0 && (
-        <nav class="mt-10 flex flex-col gap-4" aria-label={`${page.title} sections`}>
+        <nav
+          class:list={["mt-10 gap-4", menuIsGrid ? "grid grid-cols-2" : "flex flex-col"]}
+          aria-label={`${page.title} sections`}
+        >
           {children.map((child) => (
             <a
               href={pagePath(child, pages)}
-              class="rounded-full bg-brand-red px-8 py-5 text-center font-display text-2xl font-semibold text-cream no-underline transition-colors hover:bg-brand-red-dark"
+              class:list={[
+                "rounded-full py-5 text-center font-display no-underline transition-colors",
+                menuIsGrid
+                  ? "flex items-center justify-center border-2 border-brand-red bg-cream px-3 text-xl leading-tight font-bold text-brand-red hover:bg-brand-red hover:text-cream sm:px-8 sm:text-2xl"
+                  : "bg-brand-red px-8 text-2xl font-semibold text-cream hover:bg-brand-red-dark",
+              ]}
             >
               {child.title}
             </a>
