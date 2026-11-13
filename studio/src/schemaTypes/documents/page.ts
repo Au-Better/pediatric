@@ -62,6 +62,19 @@ export default defineType({
       type: 'blockContent',
     }),
     defineField({
+      name: 'menuStyle',
+      title: 'Menu button style',
+      description:
+        "How the buttons to this page's sub-pages look. Leave empty for the standard red buttons in one column.",
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Red buttons in one column', value: 'list'},
+          {title: 'Red-outlined cream buttons in a two-column grid', value: 'grid'},
+        ],
+      },
+    }),
+    defineField({
       name: 'seo',
       title: 'SEO',
       type: 'seo',
