@@ -66,7 +66,7 @@ export interface PageSummary {
   parentId?: string | null;
   intro?: string;
   /** An interactive tool shown under the intro, picked in the Studio's "Interactive tool" field. */
-  tool?: "careersRoadmap";
+  tool?: "careersRoadmap" | "doseCalculator";
   body?: PortableTextBlock[];
   mainImage?: SanityImage;
   seo?: Seo;
