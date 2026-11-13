@@ -41,6 +41,16 @@ export default defineType({
       rows: 3,
     }),
     defineField({
+      name: 'tool',
+      title: 'Interactive tool',
+      description:
+        'Shows an interactive tool on this page, below the intro. Leave empty for a regular page.',
+      type: 'string',
+      options: {
+        list: [{title: 'Medical careers roadmap', value: 'careersRoadmap'}],
+      },
+    }),
+    defineField({
       name: 'mainImage',
       title: 'Main image',
       type: 'image',
