@@ -47,7 +47,10 @@ export default defineType({
         'Shows an interactive tool on this page, below the intro. Leave empty for a regular page.',
       type: 'string',
       options: {
-        list: [{title: 'Medical careers roadmap', value: 'careersRoadmap'}],
+        list: [
+          {title: 'Medical careers roadmap', value: 'careersRoadmap'},
+          {title: "Children's dose calculator (Tylenol and ibuprofen)", value: 'doseCalculator'},
+        ],
       },
     }),
     defineField({

@@ -12,6 +12,13 @@
   --color-brand-red-dark: #ba121b;
   --color-brand-yellow: #fddd5d;
   --color-white: #fff;
+
+  /* Softer tones for tools such as the dose calculator. Yellow is kept for warnings only. */
+  --color-cream-light: #faf6ee;
+  --color-line: #e6dfd2;
+  --color-red-tint: #fbe6e4;
+  --color-warn: #fff6d6;
+  --color-warn-line: #f0d36a;
 }
 
 html {

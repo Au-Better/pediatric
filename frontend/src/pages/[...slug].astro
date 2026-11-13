@@ -2,6 +2,7 @@
 import { PortableText } from "astro-portabletext";
 import CodeBlock from "../components/CodeBlock.astro";
 import CareerRoadmap from "../components/careers/CareerRoadmap";
+import DoseCalculator from "../components/dosing/DoseCalculator";
 import Layout from "../layouts/Layout.astro";
 import { urlFor } from "../utils/image";
 import { getPages, pagePath } from "../utils/sanity";
@@ -30,6 +31,8 @@ const ogImage = ogImageSource
 // A page can carry an interactive tool, picked in the Studio's "Interactive tool" field.
 // The careers roadmap is wide, so its page header widens to line up with it.
 const showsCareersRoadmap = page.tool === "careersRoadmap";
+// The dose calculator is narrow, so its page header narrows to line up with it.
+const showsDoseCalculator = page.tool === "doseCalculator";
 // A shared link can open the roadmap on a chosen career, for example ?career=nurse-practitioner
 const initialCareer = Astro.url.searchParams.get("career") ?? undefined;
 const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
@@ -39,7 +42,11 @@ const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
   <section
     class:list={[
       "mx-auto px-5 pt-10",
-      showsCareersRoadmap ? "max-w-6xl pb-8" : "max-w-3xl pb-16",
+      showsCareersRoadmap
+        ? "max-w-6xl pb-8"
+        : showsDoseCalculator
+          ? "max-w-xl pb-8"
+          : "max-w-3xl pb-16",
     ]}
   >
     <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">
@@ -100,4 +107,6 @@ const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
       <CareerRoadmap client:load initialCareer={initialCareer} initialCompare={initialCompare} />
     )
   }
+
+  {showsDoseCalculator && <DoseCalculator client:load />}
 </Layout>
