@@ -1,0 +1,120 @@
+---
+// The site menu: a three-line button at the top right of every page that opens a small panel
+// of links. To add a page to the menu, add a line to `links` below.
+const links = [{ label: "About", href: "/about" }];
+
+// Marks the link to the page being viewed, so screen readers announce "current page".
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<div class="site-menu relative" data-site-menu>
+  <button
+    type="button"
+    class="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full text-brand-red transition-colors hover:bg-red-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+    aria-label="Menu"
+    aria-expanded="false"
+    aria-controls="site-menu-panel"
+    data-site-menu-button
+  >
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.25"
+      stroke-linecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <line class="site-menu-line site-menu-line-top" x1="4" y1="6" x2="20" y2="6"></line>
+      <line class="site-menu-line site-menu-line-middle" x1="4" y1="12" x2="20" y2="12"></line>
+      <line class="site-menu-line site-menu-line-bottom" x1="4" y1="18" x2="20" y2="18"></line>
+    </svg>
+  </button>
+
+  <nav
+    id="site-menu-panel"
+    class="absolute top-full right-0 z-50 mt-2 min-w-48 rounded-3xl border-2 border-brand-red bg-cream p-2 shadow-lg"
+    aria-label="Site menu"
+    hidden
+    data-site-menu-panel
+  >
+    <ul class="m-0 list-none p-0">
+      {
+        links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="block rounded-2xl px-5 py-3 font-display text-xl font-semibold text-brand-red no-underline transition-colors hover:bg-brand-red hover:text-cream focus-visible:bg-brand-red focus-visible:text-cream focus-visible:outline-none"
+              aria-current={currentPath === link.href ? "page" : undefined}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</div>
+
+<style>
+  /* When the menu is open, the three lines turn into an X so it reads as "close". */
+  .site-menu-line {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
+  }
+  [aria-expanded="true"] .site-menu-line-top {
+    transform: translateY(6px) rotate(45deg);
+  }
+  [aria-expanded="true"] .site-menu-line-middle {
+    opacity: 0;
+  }
+  [aria-expanded="true"] .site-menu-line-bottom {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .site-menu-line {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Opens and closes the menu. It closes on Escape (sending focus back to the button),
+  // on a click or tap anywhere outside it, and when focus moves out of it.
+  for (const menu of document.querySelectorAll<HTMLElement>("[data-site-menu]")) {
+    const button = menu.querySelector<HTMLButtonElement>("[data-site-menu-button]");
+    const panel = menu.querySelector<HTMLElement>("[data-site-menu-panel]");
+    if (!button || !panel) continue;
+
+    const setOpen = (open: boolean) => {
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-label", open ? "Close menu" : "Menu");
+      panel.hidden = !open;
+    };
+    const isOpen = () => button.getAttribute("aria-expanded") === "true";
+
+    button.addEventListener("click", () => setOpen(!isOpen()));
+
+    menu.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isOpen()) {
+        event.preventDefault();
+        setOpen(false);
+        button.focus();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (isOpen() && !menu.contains(event.target as Node)) setOpen(false);
+    });
+
+    menu.addEventListener("focusout", (event) => {
+      const next = event.relatedTarget as Node | null;
+      if (isOpen() && next && !menu.contains(next)) setOpen(false);
+    });
+  }
+</script>
