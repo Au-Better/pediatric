@@ -1,0 +1,86 @@
+---
+// The Interactive Tools page, linked from the site menu. It gathers the site's interactive tools
+// in one place, as one card each. Each tool lives on whichever Studio page has "Interactive tool"
+// set to it, so the cards follow those pages if they are moved or renamed in the Studio. A tool
+// with no published page gets no card.
+import Layout from "../layouts/Layout.astro";
+import { getPages, pagePath, type PageSummary } from "../utils/sanity";
+
+const pages = await getPages();
+
+// The tools in the order they are shown, each with a one-line description for its card.
+// A card shows its Studio page's title, or the fallback name if that page has no title.
+const tools: {
+  tool: NonNullable<PageSummary["tool"]>;
+  fallbackTitle: string;
+  description: string;
+}[] = [
+  {
+    tool: "careersRoadmap",
+    fallbackTitle: "Careers in medicine",
+    description:
+      "Pick a career in medicine and see each step from high school onward: the degrees, the exams, the training and how long it usually takes.",
+  },
+  {
+    tool: "doseCalculator",
+    fallbackTitle: "Children's dose calculator",
+    description:
+      "Answer a few questions to find a dose of liquid Tylenol, Motrin or Advil for your child by weight.",
+  },
+];
+
+const cards = tools.flatMap(({ tool, fallbackTitle, description }) => {
+  const page = pages.find((p) => p.tool === tool);
+  return page
+    ? [{ title: page.title || fallbackTitle, href: pagePath(page, pages), description }]
+    : [];
+});
+---
+
+<Layout
+  title="Interactive Tools — Au Better"
+  description="Au Better's interactive tools: the careers in medicine roadmap and the children's dose calculator."
+>
+  <section class="mx-auto max-w-3xl px-5 pt-10 pb-16">
+    <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">
+      Interactive Tools
+    </h1>
+    <p class="mt-4 max-w-3xl text-xl leading-relaxed text-ink/80 md:text-2xl">
+      Pick a tool to open it.
+    </p>
+
+    {
+      cards.length > 0 ? (
+        <ul class="mt-10 flex list-none flex-col gap-4 p-0">
+          {cards.map((card) => (
+            <li>
+              <a
+                href={card.href}
+                class="group block rounded-3xl border-2 border-brand-red bg-cream px-6 py-5 no-underline transition-colors hover:bg-brand-red focus-visible:bg-brand-red focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-red-dark sm:px-8 sm:py-6"
+              >
+                <span class="flex items-center justify-between gap-4">
+                  <span class="font-display text-2xl font-bold leading-tight text-brand-red group-hover:text-cream group-focus-visible:text-cream sm:text-3xl">
+                    {card.title}
+                  </span>
+                  <span
+                    class="font-display text-3xl font-bold text-brand-red group-hover:text-cream group-focus-visible:text-cream"
+                    aria-hidden="true"
+                  >
+                    →
+                  </span>
+                </span>
+                <span class="mt-2 block text-lg leading-relaxed text-ink/80 group-hover:text-cream group-focus-visible:text-cream">
+                  {card.description}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-10 text-xl leading-relaxed text-ink/80">
+          There are no tools to show right now. Please check back soon.
+        </p>
+      )
+    }
+  </section>
+</Layout>
