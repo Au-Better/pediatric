@@ -61,6 +61,8 @@ export interface SiteSettings {
 /** A page as the site needs it. parentId links it to the page above it in the tree. */
 export interface PageSummary {
   _id: string;
+  /** When the page was last published, used as its "last changed" date in the sitemap. */
+  _updatedAt?: string;
   title?: string;
   slug: string;
   parentId?: string | null;
@@ -98,6 +100,7 @@ export async function getPages(): Promise<PageSummary[]> {
   return loadQuery<PageSummary[]>(
     groq`*[_type == "page" && defined(slug.current)]{
       _id,
+      _updatedAt,
       title,
       menuStyle,
       "slug": slug.current,
@@ -132,6 +135,15 @@ export function pagePath(page: PageSummary, pages: PageSummary[]): string {
 }
 
 /**
+ * True when text is written out: not empty and not placeholder text, which starts with the word
+ * "Placeholder", as in the starter pages ("Placeholder: a short summary of this topic.").
+ */
+export function isRealText(text: string | null | undefined): boolean {
+  const trimmed = text?.trim() ?? "";
+  return trimmed !== "" && !/^placeholder\b/i.test(trimmed);
+}
+
+/**
  * True when a Studio page has no real content yet, so the site shows the "Under development…
  * check back soon" page in its place. A page counts as built as soon as it has any one of:
  * - pages under it (it works as a menu),
@@ -146,11 +158,6 @@ export function pagePath(page: PageSummary, pages: PageSummary[]): string {
 export function isUnderDevelopment(page: PageSummary, pages: PageSummary[]): boolean {
   if (pages.some((p) => p.parentId === page._id)) return false;
   if (page.tool || page.mainImage) return false;
-
-  const isRealText = (text: string | undefined) => {
-    const trimmed = text?.trim() ?? "";
-    return trimmed !== "" && !/^placeholder\b/i.test(trimmed);
-  };
   if (isRealText(page.intro)) return false;
 
   for (const block of page.body ?? []) {

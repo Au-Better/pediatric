@@ -5,6 +5,7 @@
 // with no published page gets no card.
 import Layout from "../layouts/Layout.astro";
 import { getPages, pagePath, type PageSummary } from "../utils/sanity";
+import { canonicalUrl } from "../utils/seo";
 
 const pages = await getPages();
 
@@ -58,6 +59,14 @@ const cards = tools.flatMap(({ tool, fallbackTitle, description }) => {
 <Layout
   title="Interactive Tools — Au Better"
   description="Au Better's interactive tools: the careers in medicine roadmap, the children's dose calculator and tools for doctors' finances."
+  page={{
+    name: "Interactive Tools",
+    kind: "CollectionPage",
+    breadcrumbs: [
+      { name: "Home", url: canonicalUrl("/") },
+      { name: "Interactive Tools", url: canonicalUrl("/interactive-tools") },
+    ],
+  }}
 >
   <section class="mx-auto max-w-3xl px-5 pt-10 pb-16">
     <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">

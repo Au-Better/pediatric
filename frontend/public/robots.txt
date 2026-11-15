@@ -1,0 +1,15 @@
+# Au Better welcomes search engines and AI assistants.
+#
+# Whether pages may actually be listed is set by "Show the site in search engines" in the
+# Studio's Site settings. While it is off, every page carries a "noindex" tag, the sitemap is
+# empty and /llms.txt is not served, so nothing is listed even though crawling is allowed.
+#
+# Content-Signal (https://contentsignals.org): search=yes lets search engines list pages;
+# ai-input=yes lets AI assistants read pages to answer questions and link back. Training AI
+# models on the site (ai-train) is left unstated, so it is neither allowed nor refused here.
+
+User-agent: *
+Content-Signal: search=yes, ai-input=yes
+Allow: /
+
+Sitemap: https://aubetter.org/sitemap.xml
