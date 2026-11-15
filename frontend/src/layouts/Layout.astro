@@ -2,40 +2,69 @@
 import { VisualEditing } from "@sanity/astro/visual-editing";
 import SiteMenu from "../components/SiteMenu.astro";
 import "../styles/global.css";
-import { getSiteSettings } from "../utils/sanity";
+import {
+  SITE_NAME,
+  SITE_URL,
+  canonicalUrl,
+  isListedInSearchEngines,
+  jsonForScriptTag,
+  structuredData,
+  type PageInfo,
+} from "../utils/seo";
 
 interface Props {
+  /** The full title for the browser tab and search results, such as "Finances — Au Better". */
   title: string;
   description?: string;
   image?: string;
+  /** Alt text for `image` when it's shared. */
+  imageAlt?: string;
   /**
    * True keeps search engines from listing this page, whatever the Studio setting says,
    * such as for a page that is still under development.
    */
   hideFromSearchEngines?: boolean;
+  /** True on the "Page not found" page, which names no address of its own. */
+  notFound?: boolean;
+  /**
+   * What the page is, for the structured data that search engines and AI tools read: its name
+   * without the site's name, its kind and its breadcrumb trail. Leave out for a plain web page.
+   */
+  page?: Omit<PageInfo, "url" | "description">;
 }
 
-const { title, description, image, hideFromSearchEngines: hideThisPage = false } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  imageAlt,
+  hideFromSearchEngines: hideThisPage = false,
+  notFound = false,
+  page,
+} = Astro.props;
 
-// Every page names https://aubetter.org as its one true address, whichever address served it.
-// Astro.site comes from `site` in astro.config.mjs.
-const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+// Every page names https://aubetter.org as its one true address, whichever address served it,
+// without a slash at the end (so /families and /families/ count as one page).
+const canonicalURL = canonicalUrl(Astro.url.pathname);
 
-// Search engines may list a page only when BOTH are true:
-// 1. "Show the site in search engines" is switched on in the Studio's Site settings, and
-// 2. the page was served from the main address (not workers.dev, a preview link, or a local copy).
-// If the setting can't be read, the page stays hidden rather than guessing.
-// A page can also ask to stay hidden on its own (the hideFromSearchEngines prop), whatever the
-// setting says.
-let showInSearchEngines = false;
-try {
-  const settings = await getSiteSettings();
-  showInSearchEngines = settings?.showInSearchEngines === true;
-} catch {
-  showInSearchEngines = false;
-}
-const servedFromMainAddress = Astro.url.hostname === "aubetter.org";
-const hideFromSearchEngines = !(showInSearchEngines && servedFromMainAddress);
+// Search engines may list a page only when "Show the site in search engines" is switched on in
+// the Studio's Site settings AND the page was served from the main address (see
+// isListedInSearchEngines in utils/seo.ts). A page can also ask to stay hidden on its own (the
+// hideFromSearchEngines prop), whatever the setting says.
+const hideFromSearchEngines =
+  hideThisPage || notFound || !(await isListedInSearchEngines(Astro.url));
+
+// A page without its own share image uses the site's: the logo and name on cream.
+const shareImage = image ?? `${SITE_URL}/og-image.png`;
+const shareImageAlt = image ? imageAlt : "The Au Better logo and name in red on cream";
+
+const jsonLd = structuredData({
+  name: page?.name ?? title,
+  kind: page?.kind,
+  breadcrumbs: page?.breadcrumbs,
+  description,
+  url: canonicalURL,
+});
 
 // Enable visual editing overlays when the env variable is set to "true"
 const visualEditingEnabled =
@@ -46,27 +75,37 @@ const visualEditingEnabled =
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="canonical" href={canonicalURL} />
-    {(hideFromSearchEngines || hideThisPage) && <meta name="robots" content="noindex" />}
+    {!notFound && <link rel="canonical" href={canonicalURL} />}
+    {hideFromSearchEngines && <meta name="robots" content="noindex" />}
 
     <!-- Primary meta -->
     {description && <meta name="description" content={description} />}
 
     <!-- Open Graph -->
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonicalURL} />
+    {!notFound && <meta property="og:url" content={canonicalURL} />}
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
-    {image && <meta property="og:image" content={image} />}
+    <meta property="og:image" content={shareImage} />
+    {!image && <meta property="og:image:width" content="1200" />}
+    {!image && <meta property="og:image:height" content="630" />}
+    {shareImageAlt && <meta property="og:image:alt" content={shareImageAlt} />}
 
     <!-- Twitter -->
-    <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
-    {image && <meta name="twitter:image" content={image} />}
+    <meta name="twitter:image" content={shareImage} />
+    {shareImageAlt && <meta name="twitter:image:alt" content={shareImageAlt} />}
+
+    <!-- Structured data: who runs the site and what this page is, for search engines and AI -->
+    <script is:inline type="application/ld+json" set:html={jsonForScriptTag(jsonLd)} />
 
     <!-- Google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -83,7 +122,7 @@ const visualEditingEnabled =
     <div class="flex min-h-dvh flex-col">
       <header class="flex items-center justify-between gap-4 px-5 py-4">
         <a href="/" class="inline-flex items-center gap-3 text-brand-red no-underline">
-          <img src="/logo.png" alt="Au Better logo" class="h-16 w-auto" />
+          <img src="/logo.png" alt="" width="480" height="561" class="h-16 w-auto" />
           <span class="font-display text-2xl font-bold">Au Better</span>
         </a>
         <SiteMenu />

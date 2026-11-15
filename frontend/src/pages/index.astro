@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { getSiteSettings } from "../utils/sanity";
+import { SITE_DESCRIPTION, SITE_NAME } from "../utils/seo";
 
 const settings = await getSiteSettings();
 
@@ -16,8 +17,9 @@ const introParts = intro.split(/(better)/);
 ---
 
 <Layout
-  title="Au Better"
-  description="Au Better is an organization serving our most vulnerable yet important generation—children."
+  title="Au Better — Tools and guides for families and medical professionals"
+  description={SITE_DESCRIPTION}
+  page={{ name: SITE_NAME }}
 >
   <section
     class="mx-auto flex min-h-[70dvh] max-w-3xl flex-col items-center justify-center px-5 py-12 text-center"

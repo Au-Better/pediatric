@@ -12,7 +12,14 @@ import RetirementGuide from "../components/finance/RetirementGuide";
 import UnderDevelopment from "../components/UnderDevelopment.astro";
 import Layout from "../layouts/Layout.astro";
 import { urlFor } from "../utils/image";
-import { getPages, isUnderDevelopment, pagePath } from "../utils/sanity";
+import { getPages, isRealText, isUnderDevelopment, pagePath } from "../utils/sanity";
+import {
+  SITE_DESCRIPTION,
+  breadcrumbsFor,
+  pageDescription,
+  withSiteName,
+  type PageKind,
+} from "../utils/seo";
 
 const pages = await getPages();
 const path = `/${Astro.params.slug ?? ""}`;
@@ -37,11 +44,28 @@ const children = pages.filter((p) => p.parentId === page._id);
 // red-outlined cream buttons in a two-column grid.
 const menuIsGrid = page.menuStyle === "grid";
 
-const seoTitle = page.seo?.metaTitle || page.title || "Au Better";
+// What search engines, AI tools and link previews show for the page. The Studio's SEO fields
+// win when filled in; otherwise the title gets "— Au Better" after it, and the description comes
+// from the intro or body (placeholder text is skipped), or the site's description if neither
+// has real text yet.
+const seoTitle = page.seo?.metaTitle || withSiteName(page.title);
 const seoDescription = underDevelopment
   ? "This page is under development. Check back soon."
-  : page.seo?.metaDescription || page.intro;
+  : pageDescription(page) || SITE_DESCRIPTION;
+// Health pages for families (the dose calculator, and topic pages under "I want to learn more
+// about" that have no tool) are marked as medical pages; the About page as an about page.
+const pagePathname = pagePath(page, pages);
+const pageKind: PageKind =
+  page.tool === "doseCalculator" ||
+  (!page.tool && children.length === 0 && pagePathname.startsWith("/families/learn/"))
+    ? "MedicalWebPage"
+    : page.slug === "about" && !page.parentId
+      ? "AboutPage"
+      : "WebPage";
+// Placeholder intros ("Placeholder: …") aren't shown, so visitors and search engines don't see them.
+const showIntro = isRealText(page.intro);
 const ogImageSource = page.seo?.ogImage ?? page.mainImage;
+const ogImageAlt = page.seo?.ogImage?.alt || page.mainImage?.alt || undefined;
 const ogImage = ogImageSource
   ? urlFor(ogImageSource).width(1200).height(630).fit("crop").auto("format").quality(80).url()
   : undefined;
@@ -87,7 +111,13 @@ const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
   title={seoTitle}
   description={seoDescription}
   image={ogImage}
+  imageAlt={ogImageAlt}
   hideFromSearchEngines={underDevelopment}
+  page={{
+    name: page.title || "Au Better",
+    kind: pageKind,
+    breadcrumbs: breadcrumbsFor(page, pages),
+  }}
 >
   {
     underDevelopment ? (
@@ -109,7 +139,7 @@ const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
           <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">
             {page.title}
           </h1>
-          {page.intro && (
+          {showIntro && (
             <p class="mt-4 max-w-3xl text-xl leading-relaxed text-ink/80 md:text-2xl">
               {page.intro}
             </p>
