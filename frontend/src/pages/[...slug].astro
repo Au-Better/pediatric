@@ -9,9 +9,10 @@ import CardGuide from "../components/finance/CardGuide";
 import MoneyFlow from "../components/finance/MoneyFlow.astro";
 import PaycheckBreakdown from "../components/finance/PaycheckBreakdown";
 import RetirementGuide from "../components/finance/RetirementGuide";
+import UnderDevelopment from "../components/UnderDevelopment.astro";
 import Layout from "../layouts/Layout.astro";
 import { urlFor } from "../utils/image";
-import { getPages, pagePath } from "../utils/sanity";
+import { getPages, isUnderDevelopment, pagePath } from "../utils/sanity";
 
 const pages = await getPages();
 const path = `/${Astro.params.slug ?? ""}`;
@@ -21,6 +22,15 @@ if (!page) {
   return Astro.rewrite("/404");
 }
 
+// A page with no real content yet (only placeholder text, see isUnderDevelopment) shows the
+// "Under development… check back soon" page with the looping logo instead, and asks search
+// engines not to list it. Its back button goes to the page above it ("Go back"), or home for
+// a page at the top of the site.
+const underDevelopment = isUnderDevelopment(page, pages);
+const parentPage = page.parentId ? pages.find((p) => p._id === page.parentId) : undefined;
+const backHref = parentPage ? pagePath(parentPage, pages) : "/";
+const backLabel = parentPage ? "Go back" : "Back to home";
+
 // A page with children works as a menu: each child is linked as a large button.
 const children = pages.filter((p) => p.parentId === page._id);
 // The Studio's "Menu button style" picks solid red buttons in one column (the default) or
@@ -28,7 +38,9 @@ const children = pages.filter((p) => p.parentId === page._id);
 const menuIsGrid = page.menuStyle === "grid";
 
 const seoTitle = page.seo?.metaTitle || page.title || "Au Better";
-const seoDescription = page.seo?.metaDescription || page.intro;
+const seoDescription = underDevelopment
+  ? "This page is under development. Check back soon."
+  : page.seo?.metaDescription || page.intro;
 const ogImageSource = page.seo?.ogImage ?? page.mainImage;
 const ogImage = ogImageSource
   ? urlFor(ogImageSource).width(1200).height(630).fit("crop").auto("format").quality(80).url()
@@ -71,85 +83,96 @@ const initialCareer = Astro.url.searchParams.get("career") ?? undefined;
 const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
 ---
 
-<Layout title={seoTitle} description={seoDescription} image={ogImage}>
-  <section
-    class:list={[
-      "mx-auto px-5 pt-10",
-      showsCareersRoadmap
-        ? "max-w-6xl pb-8"
-        : showsDoseCalculator
-          ? "max-w-xl pb-8"
-          : financeTool
-            ? "max-w-3xl pb-8"
-            : "max-w-3xl pb-16",
-    ]}
-  >
-    <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">
-      {page.title}
-    </h1>
-    {
-      page.intro && (
-        <p class="mt-4 max-w-3xl text-xl leading-relaxed text-ink/80 md:text-2xl">{page.intro}</p>
-      )
-    }
-
-    {
-      page.mainImage && (
-        <img
-          class="mt-8 w-full rounded-3xl object-cover"
-          src={urlFor(page.mainImage).width(1200).auto("format").quality(85).url()}
-          width={page.mainImage.width}
-          height={page.mainImage.height}
-          alt={page.mainImage.alt || ""}
-        />
-      )
-    }
-
-    {
-      children.length > 0 && (
-        <nav
-          class:list={["mt-10 gap-4", menuIsGrid ? "grid grid-cols-2" : "flex flex-col"]}
-          aria-label={`${page.title} sections`}
-        >
-          {children.map((child) => (
-            <a
-              href={pagePath(child, pages)}
-              class:list={[
-                "rounded-full py-5 text-center font-display no-underline transition-colors",
-                menuIsGrid
-                  ? "flex items-center justify-center border-2 border-brand-red bg-cream px-3 text-xl leading-tight font-bold text-brand-red hover:bg-brand-red hover:text-cream sm:px-8 sm:text-2xl"
-                  : "bg-brand-red px-8 text-2xl font-semibold text-cream hover:bg-brand-red-dark",
-              ]}
-            >
-              {child.title}
-            </a>
-          ))}
-        </nav>
-      )
-    }
-
-    {showsMoneyFlow && <MoneyFlow links={moneyFlowLinks} />}
-
-    {
-      page.body && (
-        <div class="prose prose-lg mt-10 max-w-none prose-a:text-brand-red">
-          <PortableText value={page.body} components={{ type: { code: CodeBlock } }} />
-        </div>
-      )
-    }
-  </section>
-
+<Layout
+  title={seoTitle}
+  description={seoDescription}
+  image={ogImage}
+  hideFromSearchEngines={underDevelopment}
+>
   {
-    showsCareersRoadmap && (
-      <CareerRoadmap client:load initialCareer={initialCareer} initialCompare={initialCompare} />
+    underDevelopment ? (
+      <UnderDevelopment pageTitle={page.title} backHref={backHref} backLabel={backLabel} />
+    ) : (
+      <>
+        <section
+          class:list={[
+            "mx-auto px-5 pt-10",
+            showsCareersRoadmap
+              ? "max-w-6xl pb-8"
+              : showsDoseCalculator
+                ? "max-w-xl pb-8"
+                : financeTool
+                  ? "max-w-3xl pb-8"
+                  : "max-w-3xl pb-16",
+          ]}
+        >
+          <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">
+            {page.title}
+          </h1>
+          {page.intro && (
+            <p class="mt-4 max-w-3xl text-xl leading-relaxed text-ink/80 md:text-2xl">
+              {page.intro}
+            </p>
+          )}
+
+          {page.mainImage && (
+            <img
+              class="mt-8 w-full rounded-3xl object-cover"
+              src={urlFor(page.mainImage).width(1200).auto("format").quality(85).url()}
+              width={page.mainImage.width}
+              height={page.mainImage.height}
+              alt={page.mainImage.alt || ""}
+            />
+          )}
+
+          {children.length > 0 && (
+            <nav
+              class:list={["mt-10 gap-4", menuIsGrid ? "grid grid-cols-2" : "flex flex-col"]}
+              aria-label={`${page.title} sections`}
+            >
+              {children.map((child) => (
+                <a
+                  href={pagePath(child, pages)}
+                  class:list={[
+                    "rounded-full py-5 text-center font-display no-underline transition-colors",
+                    menuIsGrid
+                      ? "flex items-center justify-center border-2 border-brand-red bg-cream px-3 text-xl leading-tight font-bold text-brand-red hover:bg-brand-red hover:text-cream sm:px-8 sm:text-2xl"
+                      : "bg-brand-red px-8 text-2xl font-semibold text-cream hover:bg-brand-red-dark",
+                  ]}
+                >
+                  {child.title}
+                </a>
+              ))}
+            </nav>
+          )}
+
+          {showsMoneyFlow && <MoneyFlow links={moneyFlowLinks} />}
+
+          {page.body && (
+            <div class="prose prose-lg mt-10 max-w-none prose-a:text-brand-red">
+              <PortableText value={page.body} components={{ type: { code: CodeBlock } }} />
+            </div>
+          )}
+        </section>
+
+        {showsCareersRoadmap && (
+          <CareerRoadmap
+            client:load
+            initialCareer={initialCareer}
+            initialCompare={initialCompare}
+          />
+        )}
+
+        {showsDoseCalculator && <DoseCalculator client:load />}
+
+        {page.tool === "billTracker" && <BillTracker client:load />}
+        {page.tool === "paycheckBreakdown" && (
+          <PaycheckBreakdown client:load trackerHref={billTrackerHref} />
+        )}
+        {page.tool === "creditCardGuide" && <CardGuide client:load />}
+        {page.tool === "bankAccountsGuide" && <BankAccountsGuide client:load />}
+        {page.tool === "retirementGuide" && <RetirementGuide />}
+      </>
     )
   }
-
-  {showsDoseCalculator && <DoseCalculator client:load />}
-
-  {page.tool === "billTracker" && <BillTracker client:load />}
-  {page.tool === "paycheckBreakdown" && <PaycheckBreakdown client:load trackerHref={billTrackerHref} />}
-  {page.tool === "creditCardGuide" && <CardGuide client:load />}
-  {page.tool === "bankAccountsGuide" && <BankAccountsGuide client:load />}
-  {page.tool === "retirementGuide" && <RetirementGuide />}
 </Layout>
