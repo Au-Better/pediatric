@@ -27,6 +27,24 @@ const tools: {
     description:
       "Answer a few questions to find a dose of liquid Tylenol, Motrin or Advil for your child by weight.",
   },
+  {
+    tool: "paycheckBreakdown",
+    fallbackTitle: "Where a doctor's paycheck goes",
+    description:
+      "See a resident's or attending's monthly pay, what comes out for taxes, retirement and insurance, and what's left to spend.",
+  },
+  {
+    tool: "billTracker",
+    fallbackTitle: "Bills and loans tracker",
+    description:
+      "Keep track of loans, credit cards, rent or a mortgage: what's due next and how long each debt will take to pay off. Saved only in your browser.",
+  },
+  {
+    tool: "creditCardGuide",
+    fallbackTitle: "Credit cards for doctors",
+    description:
+      "Compare popular cards' fees, rewards and credits, and see what each would really cost you.",
+  },
 ];
 
 const cards = tools.flatMap(({ tool, fallbackTitle, description }) => {
@@ -39,7 +57,7 @@ const cards = tools.flatMap(({ tool, fallbackTitle, description }) => {
 
 <Layout
   title="Interactive Tools — Au Better"
-  description="Au Better's interactive tools: the careers in medicine roadmap and the children's dose calculator."
+  description="Au Better's interactive tools: the careers in medicine roadmap, the children's dose calculator and tools for doctors' finances."
 >
   <section class="mx-auto max-w-3xl px-5 pt-10 pb-16">
     <h1 class="font-display text-5xl font-bold leading-tight text-brand-red md:text-6xl">

@@ -50,6 +50,11 @@ export default defineType({
         list: [
           {title: 'Medical careers roadmap', value: 'careersRoadmap'},
           {title: "Children's dose calculator (Tylenol and ibuprofen)", value: 'doseCalculator'},
+          {title: 'Finance: bills and loans tracker', value: 'billTracker'},
+          {title: 'Finance: paycheck breakdown (where the money goes)', value: 'paycheckBreakdown'},
+          {title: 'Finance: credit card guide', value: 'creditCardGuide'},
+          {title: 'Finance: checking, savings, HYSAs and CDs', value: 'bankAccountsGuide'},
+          {title: 'Finance: retirement accounts guide', value: 'retirementGuide'},
         ],
       },
     }),
