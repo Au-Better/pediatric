@@ -130,3 +130,37 @@ export function pagePath(page: PageSummary, pages: PageSummary[]): string {
   }
   return `/${segments.join("/")}`;
 }
+
+/**
+ * True when a Studio page has no real content yet, so the site shows the "Under development…
+ * check back soon" page in its place. A page counts as built as soon as it has any one of:
+ * - pages under it (it works as a menu),
+ * - an interactive tool,
+ * - a main image,
+ * - intro or body text that isn't placeholder text, or anything else in the body (a code block,
+ *   an inline image).
+ * Placeholder text is text that starts with the word "Placeholder", as in the starter pages
+ * ("Placeholder: a short summary of this topic."). So once real text replaces it in the Studio
+ * and is published, the page shows on its own, with no change to the code.
+ */
+export function isUnderDevelopment(page: PageSummary, pages: PageSummary[]): boolean {
+  if (pages.some((p) => p.parentId === page._id)) return false;
+  if (page.tool || page.mainImage) return false;
+
+  const isRealText = (text: string | undefined) => {
+    const trimmed = text?.trim() ?? "";
+    return trimmed !== "" && !/^placeholder\b/i.test(trimmed);
+  };
+  if (isRealText(page.intro)) return false;
+
+  for (const block of page.body ?? []) {
+    if (block._type !== "block") return false;
+    // Anything inside a line of text other than plain text (such as an inline image) is content.
+    if ((block.children ?? []).some((child) => child._type !== "span")) return false;
+    const text = (block.children ?? [])
+      .map((child) => (typeof child.text === "string" ? child.text : ""))
+      .join("");
+    if (isRealText(text)) return false;
+  }
+  return true;
+}

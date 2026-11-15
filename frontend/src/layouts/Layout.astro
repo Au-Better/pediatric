@@ -8,9 +8,14 @@ interface Props {
   title: string;
   description?: string;
   image?: string;
+  /**
+   * True keeps search engines from listing this page, whatever the Studio setting says,
+   * such as for a page that is still under development.
+   */
+  hideFromSearchEngines?: boolean;
 }
 
-const { title, description, image } = Astro.props;
+const { title, description, image, hideFromSearchEngines: hideThisPage = false } = Astro.props;
 
 // Every page names https://aubetter.org as its one true address, whichever address served it.
 // Astro.site comes from `site` in astro.config.mjs.
@@ -20,6 +25,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 // 1. "Show the site in search engines" is switched on in the Studio's Site settings, and
 // 2. the page was served from the main address (not workers.dev, a preview link, or a local copy).
 // If the setting can't be read, the page stays hidden rather than guessing.
+// A page can also ask to stay hidden on its own (the hideFromSearchEngines prop), whatever the
+// setting says.
 let showInSearchEngines = false;
 try {
   const settings = await getSiteSettings();
@@ -43,7 +50,7 @@ const visualEditingEnabled =
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
-    {hideFromSearchEngines && <meta name="robots" content="noindex" />}
+    {(hideFromSearchEngines || hideThisPage) && <meta name="robots" content="noindex" />}
 
     <!-- Primary meta -->
     {description && <meta name="description" content={description} />}
