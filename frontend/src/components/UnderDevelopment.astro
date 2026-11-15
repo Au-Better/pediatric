@@ -1,0 +1,51 @@
+---
+// What a visitor sees on a page that hasn't been written yet: the Au Better logo drawing itself
+// on a loop, a cheeky "check back soon" note and a button back to where they came from.
+// [...slug].astro shows this in place of a Studio page that has no real content yet
+// (see isUnderDevelopment in utils/sanity.ts).
+import AuBetterLoader from "./AuBetterLoader.astro";
+
+interface Props {
+  /** The page's title from the Studio, shown small above the note so visitors know where they are. */
+  pageTitle?: string;
+  /** Where the back button goes: the page above this one, or the home page. */
+  backHref: string;
+  /** The back button's label: "Go back" or "Back to home". */
+  backLabel: string;
+}
+
+const { pageTitle, backHref, backLabel } = Astro.props;
+---
+
+<section
+  class="mx-auto flex max-w-3xl flex-col items-center px-5 pt-10 pb-16 text-center"
+  aria-labelledby="under-development-heading"
+>
+  <AuBetterLoader class="h-44 w-auto md:h-52" />
+
+  {
+    pageTitle && (
+      <p class="mt-8 text-sm font-bold tracking-widest text-ink/60 uppercase">{pageTitle}</p>
+    )
+  }
+
+  <h1
+    id="under-development-heading"
+    class:list={[
+      "font-display text-4xl leading-tight font-bold text-balance text-brand-red md:text-5xl",
+      pageTitle ? "mt-3" : "mt-8",
+    ]}
+  >
+    Under development… check back soon.
+  </h1>
+  <p class="mt-4 max-w-xl text-xl leading-relaxed text-balance text-ink/80">
+    This page is still in the waiting room. The doctor will see it shortly.
+  </p>
+
+  <a
+    href={backHref}
+    class="mt-8 rounded-full bg-brand-red px-6 py-3 font-display text-lg font-semibold text-cream no-underline transition-colors hover:bg-brand-red-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+  >
+    ← {backLabel}
+  </a>
+</section>
