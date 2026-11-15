@@ -6,6 +6,7 @@ import DoseCalculator from "../components/dosing/DoseCalculator";
 import BankAccountsGuide from "../components/finance/BankAccountsGuide";
 import BillTracker from "../components/finance/BillTracker";
 import CardGuide from "../components/finance/CardGuide";
+import MoneyFlow from "../components/finance/MoneyFlow.astro";
 import PaycheckBreakdown from "../components/finance/PaycheckBreakdown";
 import RetirementGuide from "../components/finance/RetirementGuide";
 import Layout from "../layouts/Layout.astro";
@@ -50,6 +51,22 @@ const financeTool = [
 // The paycheck breakdown links to the bills tracker's page, wherever it is in the Studio.
 const billTrackerPage = pages.find((p) => p.tool === "billTracker");
 const billTrackerHref = billTrackerPage ? pagePath(billTrackerPage, pages) : undefined;
+// A menu page whose buttons include the paycheck tool (the Finances page) also shows the
+// cartoon flow sheet of where pay goes, linking each stop to the tool that explains it.
+const showsMoneyFlow = children.some((p) => p.tool === "paycheckBreakdown");
+const toolHref = (tool: string) => {
+  const found = pages.find((p) => p.tool === tool);
+  return found ? pagePath(found, pages) : undefined;
+};
+const moneyFlowLinks = showsMoneyFlow
+  ? {
+      paycheck: toolHref("paycheckBreakdown"),
+      retirement: toolHref("retirementGuide"),
+      bank: toolHref("bankAccountsGuide"),
+      bills: billTrackerHref,
+      cards: toolHref("creditCardGuide"),
+    }
+  : {};
 const initialCareer = Astro.url.searchParams.get("career") ?? undefined;
 const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
 ---
@@ -110,6 +127,8 @@ const initialCompare = Astro.url.searchParams.get("compare") ?? undefined;
         </nav>
       )
     }
+
+    {showsMoneyFlow && <MoneyFlow links={moneyFlowLinks} />}
 
     {
       page.body && (

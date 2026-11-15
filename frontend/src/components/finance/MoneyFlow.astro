@@ -1,0 +1,297 @@
+---
+// The finance section's master flow sheet: a cartoon picture of a doctor's pay starting as a
+// full treasure chest and whittling down, stop by stop, to take-home pay. It is generic on
+// purpose (no figures); the paycheck tool has the real numbers. A gold "river" runs down the
+// left and narrows after each stop, and each stop links to the tool that explains it.
+import { art, type ArtName } from "./flowArt";
+
+interface Props {
+  /** Page addresses for the finance tools, found by each page's tool in the Studio. */
+  links: {
+    paycheck?: string;
+    retirement?: string;
+    bank?: string;
+    bills?: string;
+    cards?: string;
+  };
+}
+
+const { links } = Astro.props;
+
+interface Stop {
+  art: ArtName;
+  title: string;
+  text: string;
+  link?: { href?: string; label: string };
+}
+
+const stops: Stop[] = [
+  {
+    art: "piggy",
+    title: "Retirement and HSA savings",
+    text: "Pretax money for later, like a 403(b), 457(b) or HSA. Still yours, just set aside.",
+    link: { href: links.retirement, label: "Retirement accounts" },
+  },
+  {
+    art: "umbrella",
+    title: "Insurance and benefits",
+    text: "Health, dental and vision premiums, plus any disability or life insurance through work.",
+  },
+  {
+    art: "capitol",
+    title: "Social Security and Medicare",
+    text: "A flat share of every paycheck. Social Security stops at a yearly wage cap; Medicare doesn’t.",
+  },
+  {
+    art: "taxform",
+    title: "Federal and state income tax",
+    text: "The biggest bite. The more you earn, the higher your top rate.",
+    link: { href: links.paycheck, label: "See it with real numbers" },
+  },
+];
+
+const next = [
+  { art: "house" as const, label: "Bills and loans", title: "Bills and loans tracker", href: links.bills },
+  { art: "card" as const, label: "Credit cards", title: "Credit cards for doctors", href: links.cards },
+  { art: "jar" as const, label: "Saving it", title: "Checking, savings, HYSAs and CDs", href: links.bank },
+].filter((n) => n.href);
+
+// How wide the gold river is (percent of its column) where each row starts; it narrows
+// after every stop and ends at take-home pay. A coin floats in it, shrinking with it.
+const widths = [80, 68, 56, 44, 32, 22];
+
+const half = (w: number) => w / 2;
+/** A band from top width a to bottom width b, filling its row. */
+const band = (a: number, b: number) =>
+  `M${50 - half(a)} 0 L${50 + half(a)} 0 L${50 + half(b)} 100 L${50 - half(b)} 100 Z`;
+const edges = (a: number, b: number) =>
+  `M${50 - half(a)} 0 L${50 - half(b)} 100 M${50 + half(a)} 0 L${50 + half(b)} 100`;
+
+const stroke =
+  'fill="none" stroke="#ED1D27" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"';
+const drawing = (name: ArtName) =>
+  `<svg viewBox="${art[name].viewBox}" aria-hidden="true" focusable="false" class="block h-full w-full"><g ${stroke}>${art[name].body}</g></svg>`;
+
+// On a phone each stop's picture sits beside its title with the text full width underneath;
+// on wider screens the picture takes its own column and the text sits beside it.
+// The layout itself is the .flow-card grid in the style block below.
+const cardClass = "flow-card rounded-[22px] p-3.5 sm:p-4";
+const artClass = "flow-art size-14 sm:size-24";
+const textClass = "flow-text leading-snug";
+
+const linkClass =
+  "font-bold text-brand-red underline underline-offset-2 hover:text-brand-red-dark focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-red-dark";
+---
+
+<section
+  class="money-flow mt-12 rounded-[28px] bg-white p-5 shadow-[0_1px_2px_rgb(31_31_31/0.04),0_12px_32px_rgb(31_31_31/0.06)] sm:p-8"
+  aria-labelledby="money-flow-title"
+>
+  <h2 id="money-flow-title" class="font-display text-3xl font-semibold text-ink sm:text-4xl">
+    The big picture
+  </h2>
+  <p class="mt-2 text-lg leading-snug text-ink/80">
+    How a doctor’s pay shrinks from a full treasure chest to what lands in the bank.
+  </p>
+
+  <ol class="mt-6 grid grid-cols-[2.75rem_minmax(0,1fr)] sm:grid-cols-[4.5rem_minmax(0,1fr)]">
+    <!-- Gross pay: the full chest. The river starts under it. -->
+    <li class="col-span-2 grid grid-cols-subgrid">
+      <div class="relative" aria-hidden="true">
+        <svg
+          class="absolute inset-x-0 bottom-0 h-[38%] w-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <path d={`M${50 - half(widths[0])} 100 L${50 - half(widths[0])} 40 Q50 -10 ${50 + half(widths[0])} 40 L${50 + half(widths[0])} 100 Z`} fill="#FDDD5D" />
+          <path
+            d={`M${50 - half(widths[0])} 100 L${50 - half(widths[0])} 40 Q50 -10 ${50 + half(widths[0])} 40 L${50 + half(widths[0])} 100`}
+            fill="none"
+            stroke="#ED1D27"
+            stroke-width="3"
+            stroke-linecap="round"
+            vector-effect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+      <div class="flex flex-col items-start gap-3 pb-4 pl-2.5 sm:flex-row sm:items-center sm:gap-5 sm:pl-4">
+        <div class="w-44 shrink-0 sm:w-56" set:html={drawing("chest")} />
+        <div>
+          <h3 class="font-display text-2xl font-semibold text-ink">Gross pay</h3>
+          <p class="mt-1 leading-snug">
+            The full salary in your contract or offer letter, before anything comes out.
+          </p>
+        </div>
+      </div>
+    </li>
+
+    {
+      stops.map((stop, i) => (
+        <li class="col-span-2 grid grid-cols-subgrid">
+          <div class="relative" aria-hidden="true">
+            <svg class="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d={band(widths[i], widths[i + 1])} fill="#FDDD5D" />
+              <path
+                d={edges(widths[i], widths[i + 1])}
+                fill="none"
+                stroke="#ED1D27"
+                stroke-width="3"
+                stroke-linecap="round"
+                vector-effect="non-scaling-stroke"
+              />
+            </svg>
+            <svg
+              class="absolute top-[22%] left-1/2 -translate-x-1/2"
+              style={`width:${Math.round(widths[i] * 0.45)}%`}
+              viewBox="0 0 20 20"
+            >
+              <circle cx="10" cy="10" r="8" fill="#FDDD5D" stroke="#ED1D27" stroke-width="2.5" />
+              <circle cx="10" cy="10" r="3.5" fill="none" stroke="#ED1D27" stroke-width="1.5" />
+            </svg>
+            <svg
+              class="flow-spout absolute top-1/2 left-1/2 h-8 w-[calc(50%+0.75rem)] -translate-y-1/2 overflow-visible sm:w-[calc(50%+1rem)]"
+              viewBox="0 0 40 32"
+              preserveAspectRatio="none"
+            >
+              <path d="M0 22 C12 22 22 6 40 10" fill="none" stroke="#ED1D27" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="1 6" vector-effect="non-scaling-stroke" />
+            </svg>
+          </div>
+          <div class="py-2 pl-2.5 sm:pl-4">
+            <div class={cardClass + " bg-cream-light"}>
+              <div class={artClass} set:html={drawing(stop.art)} />
+              <h3 class="flow-title font-display text-xl leading-tight font-semibold text-ink">{stop.title}</h3>
+              <p class={textClass}>{stop.text}</p>
+              {stop.link?.href && (
+                <p class="flow-link">
+                  <a href={stop.link.href} class={linkClass}>
+                    {stop.link.label}
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
+        </li>
+      ))
+    }
+
+    <!-- Take-home pay: the river ends here. -->
+    <li class="col-span-2 grid grid-cols-subgrid">
+      <div class="relative" aria-hidden="true">
+        <svg class="absolute inset-x-0 top-0 h-1/2 w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path
+            d={`M${50 - half(widths[4])} 0 L${50 - half(widths[5])} 70 Q50 110 ${50 + half(widths[5])} 70 L${50 + half(widths[4])} 0 Z`}
+            fill="#FDDD5D"
+          />
+          <path
+            d={`M${50 - half(widths[4])} 0 L${50 - half(widths[5])} 70 Q50 110 ${50 + half(widths[5])} 70 L${50 + half(widths[4])} 0`}
+            fill="none"
+            stroke="#ED1D27"
+            stroke-width="3"
+            stroke-linecap="round"
+            vector-effect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+      <div class="py-2 pl-2.5 sm:pl-4">
+        <div class={cardClass + " border-2 border-brand-red bg-red-tint/40"}>
+          <div class={artClass} set:html={drawing("wallet")} />
+          <h3 class="flow-title font-display text-2xl leading-tight font-semibold text-brand-red">Take-home pay</h3>
+          <p class={textClass}>
+            What lands in your bank account: the money you can spend, save and pay bills with.
+          </p>
+        </div>
+      </div>
+    </li>
+  </ol>
+
+  {
+    next.length > 0 && (
+      <div class="mt-8">
+        <h3 class="font-display text-xl font-semibold text-ink">Where take-home pay goes next</h3>
+        <ul class="mt-3 grid grid-cols-3 gap-2.5 sm:gap-4">
+          {next.map((n) => (
+            <li>
+              <a
+                href={n.href}
+                aria-label={n.title}
+                class="flex h-full flex-col items-center gap-1.5 rounded-[18px] border-[1.5px] border-line bg-white p-2.5 text-center no-underline transition-colors hover:border-brand-red hover:bg-cream-light focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-red-dark sm:p-4"
+              >
+                <span class="size-12 sm:size-16" set:html={drawing(n.art)} />
+                <span class="font-display text-base leading-tight font-semibold text-brand-red sm:text-lg">
+                  {n.label}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+</section>
+
+<style>
+  /* A phone puts each picture beside its title, with the text full width underneath.
+     A wider screen gives the picture its own column and centres the words beside it. */
+  .flow-card {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    grid-template-areas:
+      "art title"
+      "text text"
+      "link link";
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+  .flow-art {
+    grid-area: art;
+  }
+  .flow-title {
+    grid-area: title;
+  }
+  .flow-text {
+    grid-area: text;
+    margin-top: 0.5rem;
+  }
+  .flow-link {
+    grid-area: link;
+    margin-top: 0.375rem;
+  }
+  @media (min-width: 40rem) {
+    .flow-card {
+      grid-template-columns: 6rem minmax(0, 1fr);
+      grid-template-rows: 1fr auto auto auto 1fr;
+      grid-template-areas:
+        "art ."
+        "art title"
+        "art text"
+        "art link"
+        "art .";
+      column-gap: 1.25rem;
+    }
+    .flow-text {
+      margin-top: 0.25rem;
+    }
+  }
+</style>
+
+<style is:global>
+  .money-flow .flow-sparkle {
+    animation: flow-twinkle 2.4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes flow-twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .money-flow .flow-sparkle {
+      animation: none;
+    }
+  }
+</style>
