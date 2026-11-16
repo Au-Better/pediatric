@@ -81,6 +81,8 @@ const visualEditingEnabled =
     <meta name="generator" content={Astro.generator} />
     {!notFound && <link rel="canonical" href={canonicalURL} />}
     {hideFromSearchEngines && <meta name="robots" content="noindex" />}
+    <!-- Proves to Google Search Console that Au Better owns https://aubetter.org/. Keep it: removing it unverifies the site. -->
+    <meta name="google-site-verification" content="7z2fI5lO2QqK2GbKJr7ywdOjwA-omDfV15bWEBrJTw8" />
 
     <!-- Primary meta -->
     {description && <meta name="description" content={description} />}
