@@ -6,6 +6,16 @@
   // aubetter.org is connected in the Cloudflare dashboard (Workers & Pages → pediatric → Domains)
   // and is not affected by this line.
   "workers_dev": false,
+  // Daily visitor counts (no cookies, no IP addresses kept). See src/utils/visits.ts.
+  // Tables are in migrations/; the daily totals are in the "daily" table.
+  "d1_databases": [
+    {
+      "binding": "VISITS",
+      "database_name": "aubetter-visits",
+      "database_id": "5bf6969f-2944-4683-96fb-b9f3ab20df7c",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": {
     "logs": {
       "enabled": true,
