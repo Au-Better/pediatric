@@ -4,7 +4,8 @@
 // A visitor is counted once a day using a hash of today's random salt, their IP
 // address and their browser's user agent. The IP address is never stored, and the
 // salt and hashes are deleted when the day ends, so nobody can be followed from
-// one day to the next. Only the daily totals and per-page counts are kept.
+// one day to the next. Only the daily totals, per-page counts and per-place counts
+// (country, state or region, city, from Cloudflare's own lookup) are kept.
 import { env } from "cloudflare:workers";
 
 interface D1Result {
@@ -64,6 +65,40 @@ function cleanPath(pathname: string): string {
   return path.slice(0, 200) || "/";
 }
 
+/** Where a visit came from, as Cloudflare saw it. Never more precise than a city. */
+export interface VisitPlace {
+  country: string;
+  region: string;
+  city: string;
+}
+
+const UNKNOWN = "Unknown";
+
+function placePart(value: unknown): string {
+  if (typeof value !== "string") return UNKNOWN;
+  const text = value.trim().slice(0, 100);
+  return text || UNKNOWN;
+}
+
+/**
+ * The visitor's country, state or region, and city, from the location Cloudflare
+ * attaches to each request (request.cf). Anything missing is "Unknown".
+ */
+export function visitPlace(request: Request): VisitPlace {
+  const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
+  const code = placePart(cf?.country);
+  // Cloudflare uses XX when it can't tell the country.
+  const country =
+    code === UNKNOWN || code.toUpperCase() === "XX"
+      ? UNKNOWN
+      : code.toUpperCase();
+  return {
+    country,
+    region: placePart(cf?.region),
+    city: placePart(cf?.city),
+  };
+}
+
 function randomHex(bytes: number): string {
   const values = crypto.getRandomValues(new Uint8Array(bytes));
   return Array.from(values, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -121,5 +156,42 @@ export async function countVisit(request: Request, url: URL): Promise<void> {
     // Yesterday's salt and hashes are no longer needed: forget them.
     db.prepare("DELETE FROM visitors WHERE day < ?1").bind(day),
     db.prepare("DELETE FROM salts WHERE day < ?1").bind(day),
+  ]);
+
+  // Places are counted separately, so a problem here never loses the totals above.
+  try {
+    await countPlace(db, day, hash, visitPlace(request));
+  } catch (error) {
+    console.error("Visitor place counter failed", error);
+  }
+}
+
+/** Adds one page view (and the visitor, if new to this place today) to the place's totals. */
+async function countPlace(
+  db: D1Database,
+  day: string,
+  hash: string,
+  place: VisitPlace,
+): Promise<void> {
+  const { country, region, city } = place;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO location_visitors (day, hash, country, region, city)
+         VALUES (?1, ?2, ?3, ?4, ?5)`,
+      )
+      .bind(day, hash, country, region, city),
+    db
+      .prepare(
+        `INSERT INTO locations (day, country, region, city, visitors, page_views)
+         VALUES (?1, ?2, ?3, ?4, 1, 1)
+         ON CONFLICT(day, country, region, city) DO UPDATE SET
+           page_views = page_views + 1,
+           visitors = (SELECT COUNT(*) FROM location_visitors
+                       WHERE day = ?1 AND country = ?2 AND region = ?3 AND city = ?4)`,
+      )
+      .bind(day, country, region, city),
+    // Yesterday's per-place hashes are no longer needed: forget them.
+    db.prepare("DELETE FROM location_visitors WHERE day < ?1").bind(day),
   ]);
 }
