@@ -6,7 +6,12 @@
 // salt and hashes are deleted when the day ends, so nobody can be followed from
 // one day to the next. Only the daily totals, per-page counts and per-place counts
 // (country, state or region, city, from Cloudflare's own lookup) are kept.
+//
+// Crawlers and scripts are left out of those counts. Their page views are tallied
+// separately in the "skipped" table, by reason and network, so it's easy to see
+// what was left out and to check that no real people were.
 import { env } from "cloudflare:workers";
+import { isDataCenter } from "./dataCenters";
 
 interface D1Result {
   results: Record<string, unknown>[];
@@ -36,28 +41,74 @@ export function siteDay(date: Date = new Date()): string {
   }).format(date);
 }
 
-/** True when this request is a person opening a page that exists. */
-export function shouldCount(
+/** Why a page view was left out of the counts. */
+export type SkipReason =
+  /** The browser says it's a crawler, link preview, monitor or script. */
+  | "named_bot"
+  /** It comes from a cloud or hosting network, not a home, work or phone one. */
+  | "data_center"
+  /** No preferred language: every everyday browser sends one, many scripts don't. */
+  | "no_language";
+
+/**
+ * What this request is: null when it isn't a page view at all (not a page, an
+ * error, a prefetch or a Studio preview), "person" when it's someone opening a
+ * page, or the reason it looks automated.
+ */
+export function visitKind(
   request: Request,
   response: Response,
   url: URL,
-): boolean {
-  if (request.method !== "GET") return false;
-  if (response.status !== 200) return false;
+): "person" | SkipReason | null {
+  if (request.method !== "GET") return null;
+  if (response.status !== 200) return null;
   if (!(response.headers.get("content-type") ?? "").includes("text/html"))
-    return false;
-
-  const userAgent = request.headers.get("user-agent") ?? "";
-  if (!userAgent || NOT_A_PERSON.test(userAgent)) return false;
+    return null;
 
   // Browser prefetches, and previews inside Sanity Studio, aren't visits.
   const purpose = `${request.headers.get("sec-purpose") ?? ""} ${request.headers.get("purpose") ?? ""}`;
-  if (/prefetch|prerender/i.test(purpose)) return false;
-  if (url.searchParams.has("sanity-preview-perspective")) return false;
+  if (/prefetch|prerender/i.test(purpose)) return null;
+  if (url.searchParams.has("sanity-preview-perspective")) return null;
   const referrer = request.headers.get("referer") ?? "";
-  if (/\.sanity\.studio|sanity\.io/i.test(referrer)) return false;
+  if (/\.sanity\.studio|sanity\.io/i.test(referrer)) return null;
 
-  return true;
+  const userAgent = request.headers.get("user-agent") ?? "";
+  if (!userAgent || NOT_A_PERSON.test(userAgent)) return "named_bot";
+
+  const { asn, organization } = visitNetwork(request);
+  if (isDataCenter(asn, organization)) return "data_center";
+
+  // Scripts that send a placeholder ("*") instead of a language count as none.
+  const language = (request.headers.get("accept-language") ?? "").trim();
+  if (!language || language === "*") return "no_language";
+
+  return "person";
+}
+
+/** The network a request came from, as Cloudflare saw it (request.cf). */
+export function visitNetwork(request: Request): {
+  asn: number | undefined;
+  organization: string;
+} {
+  const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
+  const asn =
+    typeof cf?.asn === "number" && Number.isInteger(cf.asn)
+      ? cf.asn
+      : undefined;
+  const organization =
+    typeof cf?.asOrganization === "string"
+      ? cf.asOrganization.trim().slice(0, 100)
+      : "";
+  return { asn, organization };
+}
+
+/** A network's number and name for the "skipped" table, like "AS16509 Amazon.com". */
+export function networkLabel(request: Request): string {
+  const { asn, organization } = visitNetwork(request);
+  const label = [asn === undefined ? "" : `AS${asn}`, organization]
+    .filter(Boolean)
+    .join(" ");
+  return label || "Unknown";
 }
 
 function cleanPath(pathname: string): string {
@@ -193,5 +244,26 @@ async function countPlace(
       .bind(day, country, region, city),
     // Yesterday's per-place hashes are no longer needed: forget them.
     db.prepare("DELETE FROM location_visitors WHERE day < ?1").bind(day),
+  ]);
+}
+
+/**
+ * Adds one page view to today's tally of views left out, by reason and network.
+ * Nothing about the visitor is kept: no IP address, browser or hash.
+ */
+export async function countSkipped(
+  request: Request,
+  reason: SkipReason,
+): Promise<void> {
+  const db = env.VISITS as D1Database | undefined;
+  if (!db) return;
+
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO skipped (day, reason, network, views) VALUES (?1, ?2, ?3, 1)
+         ON CONFLICT(day, reason, network) DO UPDATE SET views = views + 1`,
+      )
+      .bind(siteDay(), reason, networkLabel(request)),
   ]);
 }
