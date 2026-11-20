@@ -10,6 +10,7 @@
   // Tables are in migrations/; the daily totals are in the "daily" table and
   // visits by country, state and city are in the "locations" table.
   // Crawlers and scripts are left out; their page views are in the "skipped" table.
+  // Where visits came from (Google, Bing, other sites, direct) is in the "sources" table.
   "d1_databases": [
     {
       "binding": "VISITS",

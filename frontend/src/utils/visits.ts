@@ -4,14 +4,16 @@
 // A visitor is counted once a day using a hash of today's random salt, their IP
 // address and their browser's user agent. The IP address is never stored, and the
 // salt and hashes are deleted when the day ends, so nobody can be followed from
-// one day to the next. Only the daily totals, per-page counts and per-place counts
-// (country, state or region, city, from Cloudflare's own lookup) are kept.
+// one day to the next. Only the daily totals, per-page counts, per-place counts
+// (country, state or region, city, from Cloudflare's own lookup) and per-source
+// counts (Google, Bing, another site, direct ...; see visitSources.ts) are kept.
 //
 // Crawlers and scripts are left out of those counts. Their page views are tallied
 // separately in the "skipped" table, by reason and network, so it's easy to see
 // what was left out and to check that no real people were.
 import { env } from "cloudflare:workers";
 import { isDataCenter } from "./dataCenters";
+import { UNKNOWN_SOURCE, visitSource, type VisitSource } from "./visitSources";
 
 interface D1Result {
   results: Record<string, unknown>[];
@@ -215,6 +217,18 @@ export async function countVisit(request: Request, url: URL): Promise<void> {
   } catch (error) {
     console.error("Visitor place counter failed", error);
   }
+
+  // Sources too, so a problem here never loses the totals or places above.
+  try {
+    await countSource(
+      db,
+      day,
+      hash,
+      visitSource(request.headers.get("referer"), url.hostname),
+    );
+  } catch (error) {
+    console.error("Visitor source counter failed", error);
+  }
 }
 
 /** Adds one page view (and the visitor, if new to this place today) to the place's totals. */
@@ -244,6 +258,58 @@ async function countPlace(
       .bind(day, country, region, city),
     // Yesterday's per-place hashes are no longer needed: forget them.
     db.prepare("DELETE FROM location_visitors WHERE day < ?1").bind(day),
+  ]);
+}
+
+/**
+ * Adds one page view (and the visitor, if new to this source today) to the
+ * source's totals. A click from one of the site's own pages (source null) counts
+ * toward whatever first brought this visitor today; if that wasn't seen (they
+ * arrived before midnight, or before sources were counted), it counts as unknown.
+ */
+async function countSource(
+  db: D1Database,
+  day: string,
+  hash: string,
+  found: VisitSource | null,
+): Promise<void> {
+  let source = found;
+  if (!source) {
+    const [first] = await db.batch([
+      db
+        .prepare(
+          `SELECT kind, source FROM source_visitors
+           WHERE day = ?1 AND hash = ?2 ORDER BY rowid LIMIT 1`,
+        )
+        .bind(day, hash),
+    ]);
+    const row = first?.results[0];
+    source =
+      typeof row?.kind === "string" && typeof row?.source === "string"
+        ? { kind: row.kind as VisitSource["kind"], source: row.source }
+        : UNKNOWN_SOURCE;
+  }
+
+  const { kind, source: name } = source;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO source_visitors (day, hash, kind, source)
+         VALUES (?1, ?2, ?3, ?4)`,
+      )
+      .bind(day, hash, kind, name),
+    db
+      .prepare(
+        `INSERT INTO sources (day, kind, source, visitors, page_views)
+         VALUES (?1, ?2, ?3, 1, 1)
+         ON CONFLICT(day, kind, source) DO UPDATE SET
+           page_views = page_views + 1,
+           visitors = (SELECT COUNT(*) FROM source_visitors
+                       WHERE day = ?1 AND kind = ?2 AND source = ?3)`,
+      )
+      .bind(day, kind, name),
+    // Yesterday's per-source hashes are no longer needed: forget them.
+    db.prepare("DELETE FROM source_visitors WHERE day < ?1").bind(day),
   ]);
 }
 
