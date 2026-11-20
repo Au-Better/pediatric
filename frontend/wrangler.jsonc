@@ -9,6 +9,7 @@
   // Daily visitor counts (no cookies, no IP addresses kept). See src/utils/visits.ts.
   // Tables are in migrations/; the daily totals are in the "daily" table and
   // visits by country, state and city are in the "locations" table.
+  // Crawlers and scripts are left out; their page views are in the "skipped" table.
   "d1_databases": [
     {
       "binding": "VISITS",
